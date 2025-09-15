@@ -1,0 +1,61 @@
+/* loader.module.css */
+.loaderOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45); /* fondo medio opaco */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* por encima de todo */
+}
+
+.loaderWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* tres barras animadas */
+.loader {
+  position: relative;
+  width: 1rem;
+  height: 4rem;
+}
+
+.loader,
+.loader::before,
+.loader::after {
+  background: #ffffff;
+  width: 1rem;
+  height: 4rem;
+  display: inline-block;
+  transform-origin: bottom center;
+  animation: escaleY 1s infinite ease-in-out;
+  border-radius: 2px;
+}
+
+/* barras laterales */
+.loader::before {
+  content: "";
+  position: absolute;
+  left: -1.5rem;
+  top: 0;
+  animation-delay: -0.32s;
+}
+.loader::after {
+  content: "";
+  position: absolute;
+  left: 1.5rem;
+  top: 0;
+  animation-delay: -0.16s;
+}
+
+@keyframes escaleY {
+  0%, 80%, 100% {
+    transform: scaleY(1);
+  }
+  40% {
+    transform: scaleY(1.4);
+  }
+}

@@ -1,0 +1,21 @@
+crm-inteligenze-d8966014a889.json
+
+.env
+
+# dependencies
+/node_modules
+
+# testing
+/coverage
+
+# production
+/build
+.next/
+out/
+
+# misc
+.DS_Store
+*.log
+.env.local
+.env.*.local
+.swc/

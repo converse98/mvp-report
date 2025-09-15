@@ -1,0 +1,49 @@
+{
+  "name": "my-mvp-doc",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "server": "node server.js"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^2.10.9",
+    "@ckeditor/ckeditor5-build-classic": "^41.0.0",
+    "@ckeditor/ckeditor5-react": "^7.0.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@google-cloud/discoveryengine": "^2.4.0",
+    "@google-cloud/vertexai": "^1.10.0",
+    "@huggingface/inference": "^4.7.1",
+    "@tinymce/tinymce-react": "^6.3.0",
+    "docx": "^9.5.1",
+    "express": "^4.19.2",
+    "file-saver": "^2.0.5",
+    "framer-motion": "^10.18.0",
+    "html-docx-js": "^0.3.1",
+    "html-react-parser": "^5.2.6",
+    "next": "14.1.0",
+    "next-themes": "^0.4.6",
+    "quill": "^2.0.3",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-icons": "^5.5.0",
+    "react-quill": "^2.0.0",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.7.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.13",
+    "@types/color-convert": "^2.0.4",
+    "@types/color-name": "^2.0.0",
+    "@types/file-saver": "^2.0.7",
+    "@types/node": "^20.19.13",
+    "@types/react": "^18.2.14",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.13",
+    "typescript": "^5.0.0"
+  }
+}
