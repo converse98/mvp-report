@@ -1,43 +1,26 @@
 "use client"
 
-import {
-  Toaster as ChakraToaster,
-  Portal,
-  Spinner,
-  Stack,
-  Toast,
-  createToaster,
-} from "@chakra-ui/react"
+import { Button, Stack, useToast } from "@chakra-ui/react"
 
-export const toaster = createToaster({
-  placement: "bottom-end",
-  pauseOnPageIdle: true,
-})
+export function Toaster() {
+  const toast = useToast()
 
-export const Toaster = () => {
+  const showToast = () => {
+    toast({
+      title: "Proceso completado",
+      description: "Se ejecutó correctamente.",
+      status: "success",  // success | error | warning | info
+      duration: 5000,
+      isClosable: true,
+      position: "bottom-right", // o bottom-end
+    })
+  }
+
   return (
-    <Portal>
-      <ChakraToaster toaster={toaster} insetInline={{ mdDown: "4" }}>
-        {(toast) => (
-          <Toast.Root width={{ md: "sm" }}>
-            {toast.type === "loading" ? (
-              <Spinner size="sm" color="blue.solid" />
-            ) : (
-              <Toast.Indicator />
-            )}
-            <Stack gap="1" flex="1" maxWidth="100%">
-              {toast.title && <Toast.Title>{toast.title}</Toast.Title>}
-              {toast.description && (
-                <Toast.Description>{toast.description}</Toast.Description>
-              )}
-            </Stack>
-            {toast.action && (
-              <Toast.ActionTrigger>{toast.action.label}</Toast.ActionTrigger>
-            )}
-            {toast.closable && <Toast.CloseTrigger />}
-          </Toast.Root>
-        )}
-      </ChakraToaster>
-    </Portal>
+    <Stack p={4}>
+      <Button colorScheme="blue" onClick={showToast}>
+        Mostrar Toast
+      </Button>
+    </Stack>
   )
 }
