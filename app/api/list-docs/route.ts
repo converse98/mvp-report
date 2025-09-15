@@ -119,24 +119,3 @@ export async function GET() {
     );
   }
 }
-
-// Función auxiliar para obtener un documento específico con más detalle
-export async function getDocumentDetails(documentId: string) {
-  try {
-    const client = new DocumentServiceClient({
-      apiEndpoint: "us-discoveryengine.googleapis.com",
-    });
-
-    const name = `projects/crm-inteligenze/locations/us/collections/default_collection/dataStores/docs-mvp-2025_1757526500648_gcs_store/branches/0/documents/${documentId}`;
-
-    const [document] = await client.getDocument({ name });
-
-    console.log("📄 Detalle completo del documento:", JSON.stringify(document, null, 2));
-
-    return document;
-
-  } catch (err: any) {
-    console.error("❌ Error obteniendo documento:", err);
-    throw err;
-  }
-}

@@ -32,62 +32,32 @@ export default function HomePage() {
 
   // Prompt fijo para el modelo (instruction)
   const instruction = `
-Actúa como un consultor experto en elaboración de reportes de sostenibilidad e informes integrados.
-Conoces en profundidad los estándares de reporte IFRS S1 y S2, los estándares SASB para la industria de alimentos y bebidas, y el proceso de elaboración de reportes de empresas en Perú.
-Tu función principal es redactar el capítulo de “Gestión del cambio climático” para el reporte integrado de Alicorp 2024, utilizando la información disponible en la base de conocimiento (DataStore), que incluye la transcripción de entrevistas de 2024 y el capítulo del reporte integrado 2023.
+Actúa como un consultor experto en elaboración de reportes de sostenibilidad y reportes integrados. Conoces en profundidad los estándares de reporte IFRS S1 y S2, los estándares SASB para la industria de alimentos y bebidas, y el proceso de elaboración de reportes de empresas en Perú.
 
-Objetivo
+Tu función principal es redactar el capítulo de “Gestión del cambio climático” para el reporte integrado de Alicorp 2024.
 
-Redactar un capítulo completo y bien estructurado de “Gestión del cambio climático” para el reporte 2024, tomando como referencia las normas IFRS S2, el estilo del reporte 2023 y los datos relevantes de la base de conocimiento.
+Para ello, estoy anexando un JSON con la transcripción de una entrevista con el líder de sostenibilidad de Alicorp sobre el desempeño 2024 y el capítulo del reporte integrado 2023.
 
-Enfatiza cómo la estrategia climática se integra con la planificación financiera, la resiliencia del modelo de negocio y las oportunidades de crecimiento sostenible.
+Sigue los siguientes pasos:
 
-Pasos de trabajo
+ 
 
 Analiza la normativa y el reporte anterior:
-
-Examina la estructura y requisitos de la norma IFRS S2 (Divulgaciones Financieras relacionadas con el Clima).
-
-Analiza la estructura y estilo del capítulo “Gestión del cambio climático” del reporte integrado 2023, prestando especial atención al tono, orden de los temas y la tabla final de métricas e indicadores alineados al estándar SASB.
-
+Estudia la estructura y requisitos de la norma IFRS S2 (Divulgaciones Financieras relacionadas con el Clima).
+Analiza la estructura del capítulo de “Gestión del cambio climático” del reporte integrado de 2023, prestando especial atención al estilo de redacción, el orden de los temas, y la tabla final de métricas e indicadores alineados al estándar SASB.
 Procesa la información del año actual:
+Analiza a profundidad la entrevista de 2024 para extraer los datos cuantitativos, cualitativos y los logros clave del período.
+Redacta el capítulo de Gestión del cambio climático 2024:
+Con base en tu conocimiento de IFRS S2 y el análisis del reporte 2023, redacta el capítulo para el 2024, procesando e integrando la información clave de la entrevista.
+A continuación, puntos adicionales muy importantes a tener en cuenta para la redacción:
 
-Extrae de la base de conocimiento (entrevistas, documentos de 2024) los datos cuantitativos, cualitativos y logros clave del período.
-
-Redacta el capítulo 2024:
-
-Con base en tu conocimiento de IFRS S2 y el análisis del reporte 2023, redacta el capítulo de 2024 integrando la información clave disponible.
-
-Estructura el texto en los cuatro pilares de IFRS S2: Gobernanza, Estrategia, Gestión de Riesgos, y Métricas y Objetivos.
-
-Incluye dentro de la sección de Estrategia un análisis de escenarios climáticos (por ejemplo 1.5 °C, 2 °C y 4 °C) que explique los posibles impactos financieros, riesgos y oportunidades para la compañía.
-
-En la sección de Gestión de Riesgos, describe explícitamente los riesgos de transición (regulatorios, de mercado, tecnológicos) y las oportunidades relacionadas, indicando su posible impacto en ingresos, costos o inversiones.
-
-Reglas y estilo
-
-Tono y estilo: Mantén el mismo tono de voz y estilo de redacción del capítulo 2023.
-
-Identificación de Gaps: Señala explícitamente los vacíos de información que detectes para cumplir con IFRS S2, dejando espacios claramente marcados, por ejemplo:
-
-[DATO PENDIENTE: Describir el proceso de supervisión del Directorio sobre los riesgos climáticos]
-
-[COMPLETAR: Detalle de los principales riesgos de transición identificados y su impacto financiero estimado].
-
-Logros Clave: Destaca 2 o 3 highlights principales de la gestión 2024 (ej: “Reducción de X% en emisiones de alcance 1 y 2”).
-
-Usa recursos de formato para mejorar la legibilidad: listas con <ul><li> para logros, recuadros destacados usando <strong> para cifras clave, y subtítulos claros que guíen al lector como en el reporte 2023.
-
-Tablas de métricas: No incluyas tablas en el cuerpo del texto. Crea una sección al final titulada “Métricas e Indicadores Climáticos (SASB)”, replicando la estructura de la tabla del 2023.
-
-Completa los datos de 2024 disponibles.
-
-Si una métrica no tiene datos, marca el espacio como [DATO PENDIENTE].
-
-Extensión
-
-Mantén una longitud similar a la del capítulo del reporte 2023.
-Presenta el resultado en un texto con formato, incluyendo títulos, subtítulos, negritas y los espacios en blanco claramente identificados para ser completados posteriormente.
+Estructura alineada a IFRS S2: Organiza el capítulo siguiendo una estructura clara que refleje los pilares de la norma: Gobernanza, Estrategia, Gestión de Riesgos, y Métricas y Objetivos. Asegúrate de que la narrativa fluya lógicamente, por ejemplo, que las iniciativas de gestión de energía se presenten como parte de la estrategia de mitigación y no como un tema aislado.
+Tono y Estilo: Considera el mismo tono de voz y estilo de redacción del capítulo del 2023.
+Identificación de Gaps de Información: Tu rol como consultor es clave. Identifica y señala explícitamente los vacíos de información necesarios para cumplir con IFRS S2 que no fueron cubiertos en la entrevista. Redacta los párrafos o secciones correspondientes y deja espacios claramente marcados (ej: [DATO PENDIENTE: Describir el proceso de supervisión del Directorio sobre los riesgos climáticos] o [COMPLETAR: Detalle de los principales riesgos de transición identificados y su impacto financiero estimado]). Esto es crucial para la sección de Gestión de Riesgos, donde se debe abordar el proceso de identificación y los riesgos físicos y de transición.
+Resaltar Logros Clave (Highlights): En la parte narrativa del texto, define y destaca 2 o 3 "highlights" o logros principales de la gestión 2024, basados en los datos más relevantes de la entrevista (ej: "Reducción de X% en emisiones de alcance 1 y 2").
+Uso de Tablas para Métricas: No incluyas tablas de datos en el cuerpo principal del texto. En su lugar, crea una sección al final del capítulo titulada "Métricas e Indicadores Climáticos (SASB)". Replica la estructura de la tabla del reporte 2023 y popúlala con los datos de 2024 disponibles en la entrevista. Si un dato para una métrica específica de 2024 no está disponible, deja el espacio en blanco o marcado como "[DATO PENDIENTE]".
+Extensión: Considera una extensión similar a la del capítulo del reporte 2023.
+Dame el resultado en un texto con formato, que muestre títulos, textos en negritas y los espacios en blanco claramente identificados para ser completados posteriormente.
 
 Devuelve la respuesta exclusivamente en HTML válido y estructurado.
 Usa <h2> y <h3> para títulos y subtítulos, <p> para párrafos y <ul><li> o <ol><li> para listas con viñetas o numeración.

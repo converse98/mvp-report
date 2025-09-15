@@ -7,12 +7,21 @@ export async function POST(req: Request) {
 
   try {
     // 1. Inicializar clientes
+    const googleAuthOptions = {
+    credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || "{}"),
+    };
+
+    // ✅ Cliente de Discovery Engine
     const searchClient = new SearchServiceClient({
-      apiEndpoint: "us-discoveryengine.googleapis.com", // Agregar endpoint específico
+    apiEndpoint: "us-discoveryengine.googleapis.com",
+    ...googleAuthOptions, // DiscoveryEngine sí acepta credentials directo
     });
+
+    // ✅ Cliente de Vertex AI
     const vertexAI = new VertexAI({
-      project: process.env.GOOGLE_PROJECT_ID!,
-      location: process.env.GOOGLE_LOCATION || "us-central1",
+    project: process.env.GOOGLE_PROJECT_ID!,
+    location: process.env.GOOGLE_LOCATION || "us-central1",
+    googleAuthOptions, // Vertex AI requiere googleAuthOptions
     });
 
     console.log("Instruction: " + instruction);
