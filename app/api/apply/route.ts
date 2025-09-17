@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { VertexAI } from "@google-cloud/vertexai";
 import { SearchServiceClient } from "@google-cloud/discoveryengine";
+import { Storage } from "@google-cloud/storage";
+import fs from "fs";
+import path from "path";
 
 export async function POST(req: Request) {
   const { content, instruction } = await req.json();
+  console.log("🚀 [API] Inicio de endpoint /api/apply");
 
   try {
     // 1. Inicializar clientes
@@ -11,12 +15,14 @@ export async function POST(req: Request) {
     credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || "{}"),
     };
 
-    // ✅ Cliente de Discovery Engine
-    const searchClient = new SearchServiceClient({
-    apiEndpoint: "us-discoveryengine.googleapis.com",
-    ...googleAuthOptions, // DiscoveryEngine sí acepta credentials directo
+    const storage = new Storage({
+        projectId: process.env.GCP_PROJECT_ID,
+        credentials: {
+            client_email: process.env.GCP_CLIENT_EMAIL,
+            private_key: process.env.GCP_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+        },
     });
-
+    
     // ✅ Cliente de Vertex AI
     const vertexAI = new VertexAI({
     project: process.env.GOOGLE_PROJECT_ID!,
@@ -24,25 +30,100 @@ export async function POST(req: Request) {
     googleAuthOptions, // Vertex AI requiere googleAuthOptions
     });
 
-    console.log("Instruction: " + instruction);
-    console.log("Content: " + content);
+    const bucketName = "mvp-bucket-v1";
+    // Leer el archivo JSON de la carpeta public
+    const jsonPath = path.join(process.cwd(), "public", "contentfiles.json");
+    if (!fs.existsSync(jsonPath)) {
+      return NextResponse.json({ error: "No se encontró el archivo JSON" }, { status: 400 });
+    }
 
-    // 2. Buscar información relevante en el datastore
-    const searchQuery = `${instruction} ${content}`.slice(0, 500);
+    const jsonContent = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
 
-    console.log("🔎 Ejecutando búsqueda en DataStore con query:", searchQuery);
+    // Función para extraer texto de cada bloque del JSON de Document AI
+    const extractTextFromJson = (docJson: any) => {
+      const result: Record<string, string> = {};
+      for (const fileName in docJson) {
+        const value = docJson[fileName];
 
-    // CAMBIO PRINCIPAL: Usar el path correcto con default_collection y servingConfig correcto
-    const searchRequest = {
-      //servingConfig: `projects/694128417896/locations/us/collections/default_collection/dataStores/docs-mvp-2025_1757526500648_gcs_store/servingConfigs/default_serving_config`,
-      servingConfig:  `projects/694128417896/locations/us/collections/default_collection/engines/app-mvp-2025_1757560889293/servingConfigs/default_config`,
-      query: searchQuery,
-      pageSize: 5,
+        if (typeof value === "string") {
+          result[fileName] = value;
+        } else if (value.documentLayout && Array.isArray(value.documentLayout.blocks)) {
+          let text = "";
+          for (const block of value.documentLayout.blocks) {
+            const t = block.textBlock?.text;
+            if (t) text += t + "\n";
+          }
+          result[fileName] = text.trim();
+        }
+      }
+      return result;
     };
 
-    const [searchResults] = await searchClient.search(searchRequest);
+    const filesText = extractTextFromJson(jsonContent);
+
+    //console.log("jsonContent: " + JSON.stringify(filesText, null, 2));
+
+    // === 1. Generar resúmenes individuales ===
+    const summarizer = vertexAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
+      generationConfig: { temperature: 0.2, maxOutputTokens: 8192 },
+    });
+
+    let combinedSummary = "";
+    const summaries: Record<string, string> = {};
+
+    for (const fileName in filesText) {
+      const text = filesText[fileName];
+      console.log(`🤖 Generando resumen para: ${fileName} (length: ${text.length})`);
+
+      const summaryResp = await summarizer.generateContent({
+        contents: [{
+          role: "user",
+          parts: [{
+            text: `Realiza un resumen DETALLADO pero SIN PERDER DATOS del siguiente texto:\n\n${text}`
+          }]
+        }]
+      });
+
+      const summary = summaryResp.response?.candidates?.[0]?.content?.parts?.[0]?.text || "⚠️ Sin resumen";
+      summaries[fileName] = summary;
+
+      // Concatenamos todos los resúmenes en una sola variable
+      combinedSummary += `[${fileName}]\n${summary}\n\n`;
+
+      console.log(`✅ Resumen generado para ${fileName} (length: ${summary.length})`);
+    }
+    console.log("================");
+    console.log(combinedSummary);
+    console.log("================");
+
+    // ✅ Cliente de Discovery Engine
+    /* const searchClient = new SearchServiceClient({
+    apiEndpoint: "us-discoveryengine.googleapis.com",
+    ...googleAuthOptions, // DiscoveryEngine sí acepta credentials directo
+    }); */
+
+    /* console.log("Instruction: " + instruction);
+    console.log("Content: " + content);
+ */
+    // 2. Buscar información relevante en el datastore
+    /* const searchQuery = `${instruction} ${content}`.slice(0, 500);
+
+    console.log("🔎 Ejecutando búsqueda en DataStore con query:", searchQuery);
+ */
+    // CAMBIO PRINCIPAL: Usar el path correcto con default_collection y servingConfig correcto
+/*     const searchRequest = {
+      //servingConfig: `projects/694128417896/locations/us/collections/default_collection/dataStores/docs-mvp-2025_1757526500648_gcs_store/servingConfigs/default_serving_config`,
+      servingConfig:  `projects/694128417896/locations/us/collections/default_collection/engines/app-mvp-2025_1757560889293/servingConfigs/default_config`,
+      //query: searchQuery,
+      query: "",
+      pageSize: 100,
+    };
+ */
+   /*  const [searchResults] = await searchClient.search(searchRequest);
 
     console.log("📂 Resultados brutos del DataStore:", JSON.stringify(searchResults, null, 2));
+    console.log(" DATASTORE LENGHT: " + searchResults.length);
 
     if (!searchResults || searchResults.length === 0) {
       console.warn("⚠️ No se encontraron resultados en el DataStore");
@@ -76,19 +157,21 @@ export async function POST(req: Request) {
     })
     .filter(Boolean)
     .join("\n\n");
+ */
 
+    const context = combinedSummary;
     // 4. Configurar modelo generativo
     const generativeModel = vertexAI.getGenerativeModel({
       model: "gemini-2.0-flash",
       generationConfig: {
         maxOutputTokens: 4096,
-        temperature: 0.1,
+        temperature: 0.7,
         topP: 0.95,
       },
     });
 
     // 5. Construir prompt
-    const enhancedPrompt = context
+    /* const enhancedPrompt = context
       ? `${instruction}
 
 Contexto relevante de la base de conocimientos:
@@ -103,7 +186,20 @@ ${content}
 Texto original:
 ${content}
 
-👉 No se encontró información adicional relevante en la base de conocimientos.`;
+👉 No se encontró información adicional relevante en la base de conocimientos.`; */
+
+    console.log("CONTEXTO:::");
+    console.log(context);
+
+    const enhancedPrompt = `${instruction}
+
+    Contexto relevante de la base de conocimientos:
+    ${context}
+
+    Texto original:
+    ${content}
+
+    👉 Usa la información del contexto proporcionado para complementar tu respuesta.`
 
     // 6. Llamar al modelo
     const resp = await generativeModel.generateContent({
@@ -114,7 +210,7 @@ ${content}
       resp.response?.candidates?.[0]?.content?.parts?.[0]?.text ||
       "⚠️ No hubo salida";
 
-    // 7. Devolver resultados (mejorado)
+    /* // 7. Devolver resultados (mejorado)
     const sources = searchResults.map((result) => {
       const structData = result.document?.derivedStructData;
       const fields = structData?.fields || {};
@@ -137,19 +233,19 @@ ${content}
           ((result.document as any)?.content || "").substring(0, 200) ||
           "",
       };
-    });
+    }); */
 
     console.log(">>>>>>>> " + output);
 
     return NextResponse.json({
       result: output,
-      sources: sources.length > 0 ? sources : undefined,
+      //sources: sources.length > 0 ? sources : undefined,
       contextUsed: !!context,
-      debug: {
-        searchQuery,
-        foundResults: searchResults.length,
-        contextLength: context.length
-      }
+      //debug: {
+      //  searchQuery,
+      //  foundResults: searchResults.length,
+      //  contextLength: context.length
+      //}
     });
   } catch (err: any) {
     console.error("Vertex AI error:", err);

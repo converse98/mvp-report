@@ -40,8 +40,6 @@ Para ello, estoy anexando un JSON con la transcripción de una entrevista con el
 
 Sigue los siguientes pasos:
 
- 
-
 Analiza la normativa y el reporte anterior:
 Estudia la estructura y requisitos de la norma IFRS S2 (Divulgaciones Financieras relacionadas con el Clima).
 Analiza la estructura del capítulo de “Gestión del cambio climático” del reporte integrado de 2023, prestando especial atención al estilo de redacción, el orden de los temas, y la tabla final de métricas e indicadores alineados al estándar SASB.
@@ -58,6 +56,16 @@ Resaltar Logros Clave (Highlights): En la parte narrativa del texto, define y de
 Uso de Tablas para Métricas: No incluyas tablas de datos en el cuerpo principal del texto. En su lugar, crea una sección al final del capítulo titulada "Métricas e Indicadores Climáticos (SASB)". Replica la estructura de la tabla del reporte 2023 y popúlala con los datos de 2024 disponibles en la entrevista. Si un dato para una métrica específica de 2024 no está disponible, deja el espacio en blanco o marcado como "[DATO PENDIENTE]".
 Extensión: Considera una extensión similar a la del capítulo del reporte 2023.
 Dame el resultado en un texto con formato, que muestre títulos, textos en negritas y los espacios en blanco claramente identificados para ser completados posteriormente.
+
+Instrucciones importantes a considerar sobre la redacción:
+- Narrativo y estratégico, similar a un informe de sostenibilidad de alta dirección.
+- Párrafos de 4–6 líneas, con transiciones suaves.
+- Mezcla de análisis (interpretación de datos) y visión de futuro.
+- Uso de verbos de acción, por ejemplo: “fortaleció”, “implementó”, “consolidó”, etc. (puedes usar más pero que compartan el mismo fin)
+- Mantener tono positivo pero realista; evitar lenguaje publicitario o técnico en exceso.
+- Incluir subtítulos o apartados temáticos cuando sea natural.
+- No incluyas referencias a “entrevista” o a los nombres de los documentos fuente.
+- Reescribe con tus propias palabras cada idea proveniente de la entrevista
 
 Devuelve la respuesta exclusivamente en HTML válido y estructurado.
 Usa <h2> y <h3> para títulos y subtítulos, <p> para párrafos y <ul><li> o <ol><li> para listas con viñetas o numeración.
