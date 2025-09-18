@@ -82,7 +82,7 @@ export async function POST(req: Request) {
           parts: [{
             text: `Realiza un resumen DETALLADO pero SIN PERDER DATOS del siguiente texto:\n\n${text}`
           }]
-        }]
+        }],
       });
 
       const summary = summaryResp.response?.candidates?.[0]?.content?.parts?.[0]?.text || "⚠️ Sin resumen";
@@ -202,8 +202,20 @@ ${content}
     👉 Usa la información del contexto proporcionado para complementar tu respuesta.`
 
     // 6. Llamar al modelo
-    const resp = await generativeModel.generateContent({
+    /* const resp = await generativeModel.generateContent({
       contents: [{ role: "user", parts: [{ text: enhancedPrompt }] }],
+    }); */
+
+    const resp = await generativeModel.generateContent({
+    contents: [
+        {
+        role: "user",
+        parts: [
+            { text: content } // La consulta del usuario
+        ]
+        }
+    ],
+    systemInstruction: { role: 'system', parts: [{ text: `${instruction}\n\nContexto relevante de la base de conocimientos:\n${context}` }] }
     });
 
     const output =
@@ -237,8 +249,23 @@ ${content}
 
     console.log(">>>>>>>> " + output);
 
+    const cleanOutput = output
+    // elimina el bloque inicial ```json  (con o sin espacio/línea extra)
+     .replace(/^```(json|html)\s*/i, "")
+    // elimina cualquier cierre ``` (incluyendo los del final)
+    .replace(/```$/i, "")
+    .trim();
+
+    let parsed: any;
+    try {
+    parsed = JSON.parse(cleanOutput);
+    } catch (err) {
+    console.error("❌ Error al parsear JSON:", err);
+    parsed = { error: "Formato de respuesta inválido" };
+    }
+
     return NextResponse.json({
-      result: output,
+      result: parsed,
       //sources: sources.length > 0 ? sources : undefined,
       contextUsed: !!context,
       //debug: {
