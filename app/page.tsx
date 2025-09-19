@@ -340,10 +340,10 @@
                     : "bg-white border border-gray-200 rounded-2xl"
                     }`}
                 >
-{/*                 {m.role === "user" && (
+                {m.role === "user" && (
                     // ✅ Usuario (sin cambios)
                     m.content
-                )} */}
+                )}
 
                 {m.role === "assistant" && (
                     <>
