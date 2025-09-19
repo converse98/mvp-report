@@ -28,13 +28,16 @@
     const [isTyping, setIsTyping] = useState(false);
     const [typingBuffer, setTypingBuffer] = useState("");
     const typingInterval = useRef<NodeJS.Timeout | null>(null); // ✅ NUEVO: para guardar el intervalo activo
-    type BotContent = string | {
+    type BotContent = {
         introduction: string;
         components: { title: string; detail: string }[];
     };
-    const [messages, setMessages] = useState<
-        { role: "user" | "assistant"; content: BotContent }[]
-    >([]);
+    type UserMessage = { role: "user"; content: string };        // ✅ NUEVO
+    type BotMessage  = { role: "assistant"; content: BotContent }; // ✅ NUEVO
+
+    type Message = UserMessage | BotMessage; // ✅ NUEVO
+    const [messages, setMessages] = useState<Message[]>([]);
+
 
     /* const handleChapterClick = (detail: string) => {
         // Usa tu misma función de tipeo
@@ -337,10 +340,10 @@
                     : "bg-white border border-gray-200 rounded-2xl"
                     }`}
                 >
-                {m.role === "user" && (
+{/*                 {m.role === "user" && (
                     // ✅ Usuario (sin cambios)
                     m.content
-                )}
+                )} */}
 
                 {m.role === "assistant" && (
                     <>
@@ -370,7 +373,7 @@
                                 {comp.title}
                             </p>
                             <p className="text-sm text-green-700">
-                                Descripción corta de ejemplo para este capítulo.
+                                Clickea aquí para visualizar el contenido.
                             </p>
                             </button>
                         ))}
