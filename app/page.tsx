@@ -20,12 +20,18 @@
     const [query, setQuery] = useState(""); // consulta del usuario
     const [docContent, setDocContent] = useState(""); // contenido generado por el modelo
 
+    // Guarda el contenido final editado de cada subcard
+    const [chapterContents, setChapterContents] = useState<Record<string, string>>({});
+
     const [loading, setLoading] = useState(false);
     const [updateMode, setUpdateMode] = useState<
         "replace" | "before" | "after" | "section"
     >("replace");
     const [editorInstance, setEditorInstance] = useState<any>(null);
+    // Identifica cuál subcard está activa
+    const [currentChapterKey, setCurrentChapterKey] = useState<string>("");
     const [isTyping, setIsTyping] = useState(false);
+    const [typedChapters, setTypedChapters] = useState<string[]>([]);
     const [typingBuffer, setTypingBuffer] = useState("");
     const typingInterval = useRef<NodeJS.Timeout | null>(null); // ✅ NUEVO: para guardar el intervalo activo
     type BotContent = {
@@ -44,31 +50,64 @@
         startTypingEffect(detail);
     }; */
     
-    const handleChapterClick = (detail: string) => {
-    // detiene cualquier tipeo previo
-    if (typingInterval.current) {
-        clearInterval(typingInterval.current);
-        typingInterval.current = null;
-    }
+    const handleChapterClick = (detail: string, title: string) => {
 
-    let i = 0;
-    const speed = 5; // velocidad en ms
-    const chunk = 1; // caracteres por tick
-    let buffer = ""; // ⚡ buffer local para no perder el primer carácter
+        // 🔑 Usamos el title como identificador único
+        const chapterKey = title || detail.slice(0, 20); // fallback si no hay title
+        setCurrentChapterKey(chapterKey); 
 
-    typingInterval.current = setInterval(() => {
-        // agrega al buffer local
-        buffer += detail[i];
-        // actualiza el estado
-        setTypingBuffer(buffer);
-
-        i++;
-        if (i >= detail.length) {
-        clearInterval(typingInterval.current!);
-        typingInterval.current = null;
+        if (chapterContents[chapterKey]) {
+            setIsTyping(false);
+            setTypingBuffer("");
+            setDocContent(chapterContents[chapterKey]);
+            return;
         }
-    }, speed);
+
+        // ✅ Si ya se tipeó antes → mostrar directo, sin animación
+        if (typedChapters.includes(chapterKey)) {
+            setIsTyping(false);
+            setTypingBuffer("");
+            setDocContent(detail);
+            return;
+        }
+
+  // 1️⃣ Detener tipeo previo
+  if (typingInterval.current) {
+    clearInterval(typingInterval.current);
+    typingInterval.current = null;
+  }
+
+  // 2️⃣ Limpiar estados antes de arrancar
+  setIsTyping(true);
+  setTypingBuffer("");
+  setDocContent(""); // importante si el Editor usa docContent
+
+  setTypedChapters((prev) => [...prev, chapterKey]);
+  // 3️⃣ Iniciar nuevo tipeo
+  let i = 0;
+  const speed = 2; // ms por tick
+  let buffer = "";
+
+  typingInterval.current = setInterval(() => {
+    buffer += detail[i];
+    setTypingBuffer(buffer);
+    i++;
+
+    if (i >= detail.length) {
+      clearInterval(typingInterval.current!);
+      typingInterval.current = null;
+      setIsTyping(false);
+      setDocContent(buffer); // 🔑 guardar texto final
+      // 📌 Registrar como ya tipeado
+      // 💾 Guardar el texto inicial en caso de que el usuario no edite
+      setChapterContents((prev) => ({
+        ...prev,
+        [chapterKey]: buffer,
+      }));
+    }
+  }, speed);
     };
+
 
     // Prompt fijo para el modelo (instruction)
     const instruction = `
@@ -141,6 +180,7 @@
     const startTypingEffect = (text: string) => {
     if (typingInterval.current) clearInterval(typingInterval.current);
 
+    setIsTyping(true); 
     let i = 0;
     let buffer = ""; // 👈 nueva variable
     const interval = setInterval(() => {
@@ -150,8 +190,11 @@
         i++;
         } else {
         clearInterval(interval);      // detener cuando termina
+        typingInterval.current = null;
+        setIsTyping(false);     // ⬅️ termina el tipeo
+        setDocContent(buffer);  // ⬅️ guarda el resultado final
         }
-    }, 100);
+    }, 3);
 
     typingInterval.current = interval;
     };
@@ -364,7 +407,7 @@
                         {m.content.components?.map((comp: any, idx: number) => (
                             <button
                             key={idx}
-                            onClick={() => handleChapterClick(comp.detail)}
+                            onClick={() => handleChapterClick(comp.detail, comp.title)}
                             className="w-full text-left p-3 rounded-lg border border-green-200 
                                         bg-green-50 hover:bg-green-100 hover:shadow-md
                                         transition duration-200 focus:outline-none focus:ring-2 focus:ring-green-400"
@@ -466,7 +509,7 @@
             <h2 className="text-xl font-bold mb-2">Documento</h2>
             <Editor
             apiKey={process.env.NEXT_PUBLIC_TINYMCE_API_KEY}
-            value={typingBuffer || docContent} // editor muestra SOLO la salida
+            value={isTyping ? typingBuffer : docContent} // editor muestra SOLO la salida
             onInit={(_evt: unknown, editor: TinyMCEEditor) =>
                 setEditorInstance(editor)
             }
@@ -484,7 +527,15 @@
                 "alignright alignjustify | bullist numlist outdent indent | removeformat | help",
             }}
             // Si quieres permitir editar manualmente la salida, descomenta la siguiente línea:
-            // onEditorChange={(newContent: string) => setDocContent(newContent)}
+             onEditorChange={(newValue: string) => {
+                if (!isTyping) {
+                    setDocContent(newValue);
+                    setChapterContents((prev) => ({
+                    ...prev,
+                    [currentChapterKey]: newValue,
+                }));
+                }     // ✅ solo actualiza cuando NO tipeo
+            }}
             />
             <Button
                 mt={2}                       // margin-top (en Chakra usa números o tokens)

@@ -19,3 +19,4 @@ out/
 .env.local
 .env.*.local
 .swc/
+app.yaml
