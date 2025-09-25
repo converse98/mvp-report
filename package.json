@@ -35,7 +35,8 @@
     "react-icons": "^5.5.0",
     "react-quill": "^2.0.0",
     "socket.io": "^4.7.2",
-    "socket.io-client": "^4.7.2"
+    "socket.io-client": "^4.7.2",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/color-convert": "^2.0.4",

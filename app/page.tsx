@@ -9,11 +9,13 @@
     import { Button, Box, Text } from "@chakra-ui/react";
     import { Avatar } from "@chakra-ui/react";
     import Image from "next/image";
+    import { v4 as uuidv4 } from "uuid"; // ⬅️ arriba del archivo
     
 
 
     // IMPORT del CSS Module (colócalo en la misma carpeta)
     import styles from "./loader.module.css";
+import { SubCard } from "./SubCard";
 
     export default function HomePage() {
     // Entrada del usuario (consulta) y contenido generado por el modelo (documento)
@@ -34,15 +36,36 @@
     const [typedChapters, setTypedChapters] = useState<string[]>([]);
     const [typingBuffer, setTypingBuffer] = useState("");
     const typingInterval = useRef<NodeJS.Timeout | null>(null); // ✅ NUEVO: para guardar el intervalo activo
-    type BotContent = {
-        introduction: string;
-        components: { title: string; detail: string }[];
+   type BotContent = {
+    introduction: string;
+    components: { title: string; detail: string }[];
     };
-    type UserMessage = { role: "user"; content: string };        // ✅ NUEVO
-    type BotMessage  = { role: "assistant"; content: BotContent }; // ✅ NUEVO
+
+    type UserMessage = {
+    id: string;                    // ✅ nuevo
+    role: "user";
+    content: string;
+    };
+
+    type BotMessage = {
+    id: string;                    // ✅ nuevo
+    role: "assistant";
+    content: BotContent;
+    };
 
     type Message = UserMessage | BotMessage; // ✅ NUEVO
     const [messages, setMessages] = useState<Message[]>([]);
+
+    const [disabledByMsg, setDisabledByMsg] = useState<Record<string, string[]>>({});
+
+    // 🟥 Lista con títulos + contenido de los desactivados
+    const disabledComponents = messages.flatMap((m) =>
+    m.role === "assistant" && m.content?.components
+        ? m.content.components.filter((c) =>
+            (disabledByMsg[m.id] || []).includes(c.title)
+        )
+        : []
+    );
 
 
     /* const handleChapterClick = (detail: string) => {
@@ -293,10 +316,32 @@
     };
 
     const handleSend = async () => {
+        console.log("Subcards desactivados:", disabledComponents);
         if (!query.trim()) return;
 
+         // 1️⃣ Filtrar títulos únicos en disabledComponents
+        const disabledTitles = Array.from(
+            new Set(disabledComponents.map((c: { title: string }) => c.title))
+        );
+
+        // 2️⃣ Construir el texto extra SOLO si hay elementos
+        const extraInstruction =
+            disabledTitles.length > 0
+            ? ` IMPORTANTE: no realices cambios sobre las siguientes secciones: ${disabledTitles.join(", ")}`
+            : "";
+
+        // 3️⃣ Concatenar a la query original
+        const finalQuery = query + extraInstruction;
+
         // 1. agrega el mensaje del usuario a la izquierda
-        setMessages((prev) => [...prev, { role: "user", content: query }]);
+        setMessages((prev) => [
+        ...prev,
+        {
+            id: uuidv4(),       // ✅ identificador único
+            role: "user",
+            content: finalQuery
+        }
+        ]);
 
         // 2. llama a tu API
         setLoading(true);
@@ -313,7 +358,14 @@
             const output = data?.result || "";
 
             // 3. agrega la respuesta como burbuja
-            setMessages((prev) => [...prev, { role: "assistant", content: output }]);
+            setMessages((prev) => [
+            ...prev,
+            {
+                id: uuidv4(),                     // 🔑 ID único por interacción
+                role: "assistant",
+                content: output                    // output es el JSON { introduction, components }
+            }
+            ]);
 
             // 4. opcional: también mandar el texto al editor
             startTypingEffect(output);
@@ -404,22 +456,30 @@
                         </h3>
 
                         <div className="space-y-3">
+                        <div className="space-y-3">
                         {m.content.components?.map((comp: any, idx: number) => (
-                            <button
-                            key={idx}
-                            onClick={() => handleChapterClick(comp.detail, comp.title)}
-                            className="w-full text-left p-3 rounded-lg border border-green-200 
-                                        bg-green-50 hover:bg-green-100 hover:shadow-md
-                                        transition duration-200 focus:outline-none focus:ring-2 focus:ring-green-400"
-                            >
-                            <p className="font-medium text-green-800">
-                                {comp.title}
-                            </p>
-                            <p className="text-sm text-green-700">
-                                Clickea aquí para visualizar el contenido.
-                            </p>
-                            </button>
+                        <SubCard
+                            key={`${m.id}-${idx}`}          // clave única por interacción
+                            comp={comp}
+                            onClick={handleChapterClick}
+                            isDisabled={disabledByMsg[m.id]?.includes(comp.title) || false}
+                            onToggle={() => {
+                            setDisabledByMsg((prev) => {
+                                const current = prev[m.id] || [];
+                                return {
+                                ...prev,
+                                [m.id]: current.includes(comp.title)
+                                    ? current.filter((t) => t !== comp.title)
+                                    : [...current, comp.title]
+                                };
+                            });
+                            }}
+                        />
                         ))}
+
+                        </div>
+
+
                         </div>
                     </div>
                     </>
