@@ -10,12 +10,14 @@
     import { Avatar } from "@chakra-ui/react";
     import Image from "next/image";
     import { v4 as uuidv4 } from "uuid"; // ⬅️ arriba del archivo
-    
+    import { CKEditor } from '@ckeditor/ckeditor5-react';
+    import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 
 
     // IMPORT del CSS Module (colócalo en la misma carpeta)
     import styles from "./loader.module.css";
 import { SubCard } from "./SubCard";
+import CKEditorWrapper from "./CKEditorWrapper";
 
     export default function HomePage() {
     // Entrada del usuario (consulta) y contenido generado por el modelo (documento)
@@ -72,64 +74,102 @@ import { SubCard } from "./SubCard";
         // Usa tu misma función de tipeo
         startTypingEffect(detail);
     }; */
+
+    const startHtmlTypingEffect = (html: string) => {
+        if (typingInterval.current) clearInterval(typingInterval.current);
+
+        // 1. Tokenizamos en tags o texto
+        const tokens = html.match(/<\/?[^>]+>|[^<]+/g) || [];
+
+        let tokenIndex = 0;     // índice de token actual
+        let charIndex  = 0;     // índice dentro del token
+        let currentOutput = "";
+
+        setIsTyping(true);
+        setTypingBuffer("");
+
+        const interval = setInterval(() => {
+            if (tokenIndex >= tokens.length) {
+            clearInterval(interval);
+            typingInterval.current = null;
+            setIsTyping(false);
+            setDocContent(html);         // ✅ Al final, HTML completo
+            return;
+            }
+
+            const token = tokens[tokenIndex];
+
+            if (token.startsWith("<")) {
+            // 👉 Si es TAG, lo ponemos de golpe (no lo partimos)
+            currentOutput += token;
+            tokenIndex++;
+            charIndex = 0;
+            } else {
+            // 👉 Si es TEXTO, lo vamos mostrando carácter a carácter
+            currentOutput += token[charIndex];
+            charIndex++;
+            if (charIndex >= token.length) {
+                tokenIndex++;
+                charIndex = 0;
+            }
+            }
+
+            setTypingBuffer(currentOutput);
+        }, 2); // ⚡ velocidad de tipeo (ms por paso)
+
+        typingInterval.current = interval;
+    };
+
     
     const handleChapterClick = (detail: string, title: string) => {
+    // 🔑 Usamos el title como identificador único
+    const chapterKey = title || detail.slice(0, 20); // fallback si no hay title
+    setCurrentChapterKey(chapterKey);
 
-        // 🔑 Usamos el title como identificador único
-        const chapterKey = title || detail.slice(0, 20); // fallback si no hay title
-        setCurrentChapterKey(chapterKey); 
-
-        if (chapterContents[chapterKey]) {
-            setIsTyping(false);
-            setTypingBuffer("");
-            setDocContent(chapterContents[chapterKey]);
-            return;
-        }
-
-        // ✅ Si ya se tipeó antes → mostrar directo, sin animación
-        if (typedChapters.includes(chapterKey)) {
-            setIsTyping(false);
-            setTypingBuffer("");
-            setDocContent(detail);
-            return;
-        }
-
-  // 1️⃣ Detener tipeo previo
-  if (typingInterval.current) {
-    clearInterval(typingInterval.current);
-    typingInterval.current = null;
-  }
-
-  // 2️⃣ Limpiar estados antes de arrancar
-  setIsTyping(true);
-  setTypingBuffer("");
-  setDocContent(""); // importante si el Editor usa docContent
-
-  setTypedChapters((prev) => [...prev, chapterKey]);
-  // 3️⃣ Iniciar nuevo tipeo
-  let i = 0;
-  const speed = 2; // ms por tick
-  let buffer = "";
-
-  typingInterval.current = setInterval(() => {
-    buffer += detail[i];
-    setTypingBuffer(buffer);
-    i++;
-
-    if (i >= detail.length) {
-      clearInterval(typingInterval.current!);
-      typingInterval.current = null;
-      setIsTyping(false);
-      setDocContent(buffer); // 🔑 guardar texto final
-      // 📌 Registrar como ya tipeado
-      // 💾 Guardar el texto inicial en caso de que el usuario no edite
-      setChapterContents((prev) => ({
-        ...prev,
-        [chapterKey]: buffer,
-      }));
+    // Si ya guardamos edición previa -> mostrar eso (sin tipeo)
+    if (chapterContents[chapterKey]) {
+        setIsTyping(false);
+        setTypingBuffer("");
+        setDocContent(chapterContents[chapterKey]);
+        return;
     }
-  }, speed);
+
+    // Si ya se tipeó antes -> mostrar HTML final directo
+    if (typedChapters.includes(chapterKey)) {
+        setIsTyping(false);
+        setTypingBuffer("");
+        setDocContent(detail);
+        return;
+    }
+
+    // STOP cualquier tipeo previo
+    if (typingInterval.current) {
+        clearInterval(typingInterval.current);
+        typingInterval.current = null;
+    }
+
+    // PREPARAR contenido plano para el tipeo (evitamos romper HTML)
+    const fullHtml = detail || "";
+    // Extraemos texto plano (eliminando tags) y normalizamos espacios
+    const plainText = fullHtml.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+
+    // Si no hay texto para tipear, asignamos HTML final directamente
+    if (!plainText) {
+        setDocContent(fullHtml);
+        setChapterContents((prev) => ({ ...prev, [chapterKey]: fullHtml }));
+        setTypedChapters((prev) => [...prev, chapterKey]);
+        return;
+    }
+
+    // INICIAR tipeo sobre texto plano
+    setIsTyping(true);
+    setTypingBuffer("");
+    setDocContent(""); // limpiar editor por seguridad
+    setTypedChapters((prev) => [...prev, chapterKey]);
+
+    startHtmlTypingEffect(detail); // 👈 NUEVO: tipeo con formato
     };
+
 
 
     // Prompt fijo para el modelo (instruction)
@@ -203,24 +243,33 @@ import { SubCard } from "./SubCard";
     const startTypingEffect = (text: string) => {
     if (typingInterval.current) clearInterval(typingInterval.current);
 
-    setIsTyping(true); 
+    // Convertimos a texto plano para no romper HTML
+    const plainText = (text || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+    if (!plainText) {
+        setDocContent(text);
+        return;
+    }
+
+    setIsTyping(true);
     let i = 0;
-    let buffer = ""; // 👈 nueva variable
+    let buffer = "";
+
     const interval = setInterval(() => {
-        if (i < text.length) {
-        buffer += text[i];            // 👉 agrega la siguiente letra
-        setTypingBuffer(buffer);      // actualiza el estado
+        if (i < plainText.length) {
+        buffer += plainText[i];
+        setTypingBuffer(`<p>${buffer}</p>`);
         i++;
         } else {
-        clearInterval(interval);      // detener cuando termina
+        clearInterval(interval);
         typingInterval.current = null;
-        setIsTyping(false);     // ⬅️ termina el tipeo
-        setDocContent(buffer);  // ⬅️ guarda el resultado final
+        setIsTyping(false);
+        setDocContent(text); // al final ponemos el HTML original (si lo hay)
         }
     }, 3);
 
     typingInterval.current = interval;
     };
+
 
     const applyInstructions = async () => {
         setLoading(true);
@@ -288,32 +337,67 @@ import { SubCard } from "./SubCard";
     const handleDownload = () => {
         const children: TextRun[] = [];
 
-        // parsear docContent (salida) para armar el docx
-        parse(docContent, {
-        replace: (node: any) => {
-            if (node.type === "tag") {
-            const style: any = {};
-            if (node.name === "strong" || node.name === "b") style.bold = true;
-            if (node.name === "em" || node.name === "i") style.italics = true;
-            if (node.name === "s" || node.name === "strike") style.strike = true;
+        // 👉 1. Unir SOLO los detalles (sin introduction)
+        const fullHtml = messages
+        .filter((m) => m.role === "assistant")
+        .map((m) => {
+            const c = m.content as BotContent;
+            // 🔑 Solo concatenar los componentes (detalle)
+            const comps = c.components
+                .map((comp) => comp.detail)   // 👈 SOLO detail, sin repetir títulos
+                .join("<br/><br/>");
+            return comps;
+        })
+        .join("<br/><br/>");
 
-            if (node.children && node.children[0]?.data) {
-                children.push(
-                new TextRun({ text: node.children[0].data, ...style })
-                );
-            }
-            } else if (node.type === "text") {
-            children.push(new TextRun({ text: node.data }));
-            }
-        },
+        // 👉 2. Parsear el HTML combinado
+        parse(fullHtml, {
+            replace: (node: any) => {
+                if (node.type === "tag") {
+                    const style: any = {};
+
+                    if (node.name === "strong" || node.name === "b") style.bold = true;
+                    if (node.name === "em" || node.name === "i") style.italics = true;
+                    if (node.name === "s" || node.name === "strike") style.strike = true;
+
+                    // Si el contenido ya trae <h1>, <h2>, etc. lo respetamos
+                    if (/^h[1-6]$/.test(node.name) && node.children?.[0]?.data) {
+                        children.push(
+                            new TextRun({
+                                text: node.children[0].data,
+                                bold: true,
+                                size: 28,
+                                break: 2,
+                            })
+                        );
+                        return;
+                    }
+
+                    if (node.children && node.children[0]?.data) {
+                        children.push(
+                            new TextRun({
+                                text: node.children[0].data,
+                                ...style,
+                            })
+                        );
+                    }
+                } else if (node.type === "text") {
+                    children.push(new TextRun({ text: node.data }));
+                }
+            },
         });
 
+        // 👉 3. Crear documento Word
         const doc = new Document({
-        sections: [{ properties: {}, children: [new Paragraph({ children })] }],
+            sections: [{ properties: {}, children: [new Paragraph({ children })] }],
         });
 
+        // 👉 4. Descargar
         Packer.toBlob(doc).then((blob) => saveAs(blob, "documento.docx"));
     };
+
+
+
 
     const handleSend = async () => {
         console.log("Subcards desactivados:", disabledComponents);
@@ -565,48 +649,24 @@ import { SubCard } from "./SubCard";
         </div>
 
         {/* Panel derecho - Documento (70%) */}
-        <div className="w-[70%] p-4 flex flex-col">
-            <h2 className="text-xl font-bold mb-2">Documento</h2>
-            <Editor
-            apiKey={process.env.NEXT_PUBLIC_TINYMCE_API_KEY}
-            value={isTyping ? typingBuffer : docContent} // editor muestra SOLO la salida
-            onInit={(_evt: unknown, editor: TinyMCEEditor) =>
-                setEditorInstance(editor)
-            }
-            init={{
-                height: "95%",
-                menubar: true,
-                plugins: [
-                "advlist autolink lists link image charmap preview anchor",
-                "searchreplace visualblocks code fullscreen",
-                "insertdatetime media table help wordcount",
-                ],
-                toolbar:
-                "undo redo | formatselect | " +
-                "bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter " +
-                "alignright alignjustify | bullist numlist outdent indent | removeformat | help",
-            }}
-            // Si quieres permitir editar manualmente la salida, descomenta la siguiente línea:
-             onEditorChange={(newValue: string) => {
-                if (!isTyping) {
-                    setDocContent(newValue);
-                    setChapterContents((prev) => ({
-                    ...prev,
-                    [currentChapterKey]: newValue,
-                }));
-                }     // ✅ solo actualiza cuando NO tipeo
+        <div className="w-[70%] p-4 flex flex-col h-full">  {/* h-full porque el padre es h-screen */}
+        <h2 className="text-xl font-bold mb-2">Documento</h2>
+
+        <div className="flex flex-col h-[calc(100vh-60px)]">   {/* IMPORTANTE: min-h-0 para que el hijo pueda hacer overflow interno */}
+            <CKEditorWrapper
+            data={isTyping ? typingBuffer : docContent}
+            disabled={isTyping}
+            className="h-full"   // hace que el wrapper ocupe todo el espacio disponible
+            onChange={(html) => {
+                setDocContent(html);
+                setChapterContents((prev) => ({ ...prev, [currentChapterKey]: html }));
             }}
             />
-            <Button
-                mt={2}                       // margin-top (en Chakra usa números o tokens)
-                colorScheme="green"           // esquema de color (green = verde)
-                px={4}
-                py={2}
-                borderRadius="md"             // opcional, md = border-radius medio
-                onClick={handleDownload}
-                >
+        </div>
+
+        <Button mt={2} colorScheme="green" px={4} py={2} borderRadius="md" onClick={handleDownload}>
             Descargar Word
-            </Button>
+        </Button>
         </div>
         </div>
     );

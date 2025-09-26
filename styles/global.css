@@ -1,4 +1,32 @@
-body {
+html, body, #__next {
+  height: 100%;
   margin: 0;
-  font-family: sans-serif;
+  padding: 0;
+  box-sizing: border-box;
 }
+
+/* Estilos específicos de CKEditor para forzar altura */
+
+.ck.ck-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* el contenedor CKEditor ocupa toda la altura del padre */
+}
+
+/* El “main” del editor que contiene la toolbar + editable */
+.ck.ck-editor .ck-editor__main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;  /* que este contenedor crezca */
+  min-height: 0; /* para que el flex no aplaste al área editable */
+}
+
+/* El área editable donde escribes: este es el más importante */
+.ck-editor__editable_inline,
+.ck-editor__editable {
+  flex: 1 1 0;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: auto !important;
+}
+    

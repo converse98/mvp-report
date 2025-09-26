@@ -2,7 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body {
+/* --- necesario para layout completo --- */
+html, body, #__next {
   height: 100%;
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* --- CKEditor: forzar comportamiento flex y altura completa --- */
+.ck.ck-editor {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.ck.ck-editor .ck-editor__main {
+  flex: 1 1 0% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+}
+
+/* área editable: que ocupe todo lo que quede y permita scroll interno */
+.ck-editor__editable_inline,
+.ck-editor__editable,
+.ck.ck-editor .ck-content {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: auto !important;
+}
+
+/* toolbar no crece */
+.ck.ck-editor .ck-toolbar {
+  flex: 0 0 auto !important;
 }
