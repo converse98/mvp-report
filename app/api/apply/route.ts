@@ -203,7 +203,7 @@ ${content}
     Contexto relevante de la base de conocimientos:
     ${context}
 
-    Texto original:
+    Petición del usuario:
     ${content}
 
     👉 Usa la información del contexto proporcionado para complementar tu respuesta.`

@@ -234,8 +234,12 @@ import CKEditorWrapper from "./CKEditorWrapper";
         ]
     }
 
-    El campo introduction, contendrá una pequeña introducción a la respuesta brindada, por ejemplo: 'Se te ha generado el reporte solicitado en base a los siguientes puntos... etc", aqui solo considerar en formato HTML temas de enfasis en texto como negrita, cursiva, subrayado.
-    IMPORTANTE considerar que el ejemplo de introduction es como tal un ejemplo, el campo introduction se debe completar de acuerdo a lo que el usuario solicite, si solo pide un cambio en específico, el campo introduction debe traer una respuesta de acuerdo a ello.
+    El campo introduction, seguirá las siguientes reglas:
+    IMPORTANTE:
+    - El campo introduction **debe** describir explícitamente la petición del usuario, 
+    detallando el tipo de cambio, sección o formato solicitado.
+    - No uses introducciones genéricas. 
+    - Aunque la petición sea pequeña, el introduction debe reflejarla.
     Donde components tendrá la cantidad de secciones del reporte, en caso se pida todo el reporte las secciones a considerar son las ya mencionadas previamente, en total 4: Gobernanza, Estrategia, Gestión de Riesgos, y Métricas y Objetivos (Considerar solo esas 4 opciones, no se puede tener otra sección en title)
     Y en caso no se pida todo el reporte solo una sección, considerar solo la sección mencionada.
     En el campo title debe contener el nombre de la sección, y en el campo detail, el contenido que se genera por esa sección, en formato HTML como ya se mencionó previamete. 
