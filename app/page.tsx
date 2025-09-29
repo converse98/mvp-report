@@ -408,6 +408,11 @@ import CKEditorWrapper from "./CKEditorWrapper";
         console.log("Subcards desactivados:", disabledComponents);
         if (!query.trim()) return;
 
+        // 🔹 1. Limpiar el editor y el efecto de tipeo
+        setDocContent("");       // ✅ Limpia el contenido del editor
+        setTypingBuffer("");     // ✅ Limpia el buffer de escritura
+        setIsTyping(false);      // ✅ Por si había un efecto de tipeo activo
+
          // 1️⃣ Filtrar títulos únicos en disabledComponents
         const disabledTitles = Array.from(
             new Set(disabledComponents.map((c: { title: string }) => c.title))
