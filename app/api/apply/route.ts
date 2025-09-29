@@ -10,6 +10,13 @@ export async function POST(req: Request) {
   console.log("🚀 [API] Inicio de endpoint /api/apply");
 
   try {
+
+    const keyPath = path.join("/tmp", "gcp-key.json");
+    if (!fs.existsSync(keyPath)) {
+    fs.writeFileSync(keyPath, process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || "");
+    }
+
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = keyPath;
     // 1. Inicializar clientes
     const googleAuthOptions = {
     credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || "{}"),
@@ -27,7 +34,7 @@ export async function POST(req: Request) {
     const vertexAI = new VertexAI({
     project: process.env.GOOGLE_PROJECT_ID!,
     location: process.env.GOOGLE_LOCATION || "us-central1",
-    googleAuthOptions, // Vertex AI requiere googleAuthOptions
+    //googleAuthOptions, // Vertex AI requiere googleAuthOptions
     });
 
     const bucketName = "mvp-bucket-v1";
@@ -253,8 +260,10 @@ ${content}
     // elimina el bloque inicial ```json  (con o sin espacio/línea extra)
      .replace(/^```(json|html)\s*/i, "")
     // elimina cualquier cierre ``` (incluyendo los del final)
-    .replace(/```$/i, "")
+    .replace(/```[\s\S]*$/i, "")
     .trim();
+
+    console.log("<<<<<< " + cleanOutput);
 
     let parsed: any;
     try {
