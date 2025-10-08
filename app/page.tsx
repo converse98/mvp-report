@@ -1,17 +1,13 @@
     "use client";
 
     import { useEffect, useRef, useState } from "react";
-    import { Editor } from "@tinymce/tinymce-react";
     import { saveAs } from "file-saver";
     import { Document, Paragraph, TextRun, Packer } from "docx";
     import parse from "html-react-parser";
-    import { Editor as TinyMCEEditor } from "@tinymce/tinymce-react";
-    import { Button, Box, Text } from "@chakra-ui/react";
-    import { Avatar } from "@chakra-ui/react";
+    import { Button } from "@chakra-ui/react";
     import Image from "next/image";
     import { v4 as uuidv4 } from "uuid"; // ⬅️ arriba del archivo
-    import { CKEditor } from '@ckeditor/ckeditor5-react';
-    import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+    import { toast } from "sonner";
 
 
     // IMPORT del CSS Module (colócalo en la misma carpeta)
@@ -68,12 +64,6 @@ import CKEditorWrapper from "./CKEditorWrapper";
         )
         : []
     );
-
-
-    /* const handleChapterClick = (detail: string) => {
-        // Usa tu misma función de tipeo
-        startTypingEffect(detail);
-    }; */
 
     const startHtmlTypingEffect = (html: string) => {
         if (typingInterval.current) clearInterval(typingInterval.current);
@@ -310,6 +300,9 @@ import CKEditorWrapper from "./CKEditorWrapper";
         });
         const data = await res.json();
         const output = data?.result || "";
+        const tokens = data?.tokens || {};
+
+        toast.info("Tokens usados: " + tokens.total, { description: "Input:" + tokens.input + " || Output: " + tokens.output });
 
         // Aplicar según updateMode (mantengo la lógica que tenías)
         if (updateMode === "replace") {
@@ -450,6 +443,10 @@ import CKEditorWrapper from "./CKEditorWrapper";
             });
             const data = await res.json();
             const output = data?.result || "";
+            const tokens = data?.tokens || {};
+
+            toast.info("Tokens usados: " + tokens.total, { description: "Input:" + tokens.input + " || Output: " + tokens.output });
+
 
             // 3. agrega la respuesta como burbuja
             setMessages((prev) => [

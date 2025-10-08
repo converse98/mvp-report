@@ -22,6 +22,7 @@
     "docx": "^9.5.1",
     "express": "^4.19.2",
     "file-saver": "^2.0.5",
+    "firebase-admin": "^13.5.0",
     "framer-motion": "^10.18.0",
     "html-docx-js": "^0.3.1",
     "html-react-parser": "^5.2.6",
@@ -36,6 +37,7 @@
     "react-quill": "^2.0.0",
     "socket.io": "^4.7.2",
     "socket.io-client": "^4.7.2",
+    "sonner": "^2.0.7",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

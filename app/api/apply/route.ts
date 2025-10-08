@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { VertexAI } from "@google-cloud/vertexai";
 import { SearchServiceClient } from "@google-cloud/discoveryengine";
 import { Storage } from "@google-cloud/storage";
+import { initializeFirebaseAdmin } from "../../lib/firebase-admin";
 import fs from "fs";
 import path from "path";
 
@@ -11,37 +12,36 @@ export async function POST(req: Request) {
 
   try {
 
-    const keyPath = path.join("/tmp", "gcp-key.json");
+   /*  const keyPath = path.join("/tmp", "gcp-key.json");
     if (!fs.existsSync(keyPath)) {
     fs.writeFileSync(keyPath, process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || "");
-    }
+    } */
 
-    process.env.GOOGLE_APPLICATION_CREDENTIALS = keyPath;
+    //process.env.GOOGLE_APPLICATION_CREDENTIALS = keyPath;
     // 1. Inicializar clientes
     const googleAuthOptions = {
     credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || "{}"),
-    };
+    }; 
 
-    const storage = new Storage({
+    /* const storage = new Storage({
         projectId: process.env.GCP_PROJECT_ID,
         credentials: {
             client_email: process.env.GCP_CLIENT_EMAIL,
             private_key: process.env.GCP_PRIVATE_KEY?.replace(/\\n/g, "\n"),
         },
-    });
+    }); */
     
     // ✅ Cliente de Vertex AI
     const vertexAI = new VertexAI({
     project: process.env.GOOGLE_PROJECT_ID!,
     location: process.env.GOOGLE_LOCATION || "us-central1",
-    //googleAuthOptions, // Vertex AI requiere googleAuthOptions
+    googleAuthOptions, // Vertex AI requiere googleAuthOptions
     });
 
-    const bucketName = "mvp-bucket-v1";
+    /* const bucketName = "mvp-bucket-v1";
     // Leer el archivo JSON de la carpeta public
     const jsonPath = path.join(process.cwd(), "public", "contentfiles.json");
     if (!fs.existsSync(jsonPath)) {
-      return NextResponse.json({ error: "No se encontró el archivo JSON" }, { status: 400 });
     }
 
     const jsonContent = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
@@ -65,6 +65,20 @@ export async function POST(req: Request) {
       }
       return result;
     };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     const filesText = extractTextFromJson(jsonContent);
 
@@ -99,7 +113,43 @@ export async function POST(req: Request) {
       combinedSummary += `[${fileName}]\n${summary}\n\n`;
 
       console.log(`✅ Resumen generado para ${fileName} (length: ${summary.length})`);
+    } */
+
+    console.log("📚 Obteniendo documentos desde Firestore...");
+    
+    // 1. Inicializar Firestore
+    const db = initializeFirebaseAdmin();
+    
+    // 2. Obtener todos los documentos de la colección
+    const snapshot = await db.collection('documents').get();
+    
+    if (snapshot.empty) {
+      console.warn("⚠️ No se encontraron documentos en Firestore");
+      return NextResponse.json(
+        { error: "No hay documentos disponibles en la base de datos" },
+        { status: 404 }
+      );
     }
+    
+    console.log(`✅ Se encontraron ${snapshot.size} documentos en Firestore`);
+    
+    // 3. Construir el contexto concatenando título + summary
+    let combinedSummary = "";
+    
+    snapshot.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+      const data = doc.data();
+      const title = data.name || data.title || doc.id; // Flexibilidad en el nombre del campo
+      const summary = data.summary || "";
+      
+      if (summary) {
+        combinedSummary += `### ${title}\n${summary}\n\n`;
+        console.log(`📄 Agregado: ${title} (${summary.length} caracteres)`);
+      } else {
+        console.warn(`⚠️ Documento sin resumen: ${title}`);
+      }
+    });
+
+
     console.log("================");
     console.log(combinedSummary);
     console.log("================");
@@ -225,6 +275,8 @@ ${content}
     systemInstruction: { role: 'system', parts: [{ text: `${instruction}\n\nContexto relevante de la base de conocimientos:\n${context}` }] }
     });
 
+    console.log("--->>> " + JSON.stringify(resp))
+
     const output =
       resp.response?.candidates?.[0]?.content?.parts?.[0]?.text ||
       "⚠️ No hubo salida";
@@ -273,10 +325,21 @@ ${content}
     parsed = { error: "Formato de respuesta inválido" };
     }
 
+    const {
+      promptTokenCount, 
+      candidatesTokenCount, 
+      totalTokenCount 
+    } = resp.response?.usageMetadata ?? {};
+
     return NextResponse.json({
       result: parsed,
       //sources: sources.length > 0 ? sources : undefined,
       contextUsed: !!context,
+      tokens: {
+        input: promptTokenCount || 0,
+        output: candidatesTokenCount || 0,
+        total: totalTokenCount || 0
+      }
       //debug: {
       //  searchQuery,
       //  foundResults: searchResults.length,
